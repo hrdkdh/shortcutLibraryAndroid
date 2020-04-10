@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">shortcutLibrary</string>
+    <string name="app_name">국민단축키</string>
+    <string name="tabMenuText_search">단축키 사전</string>
+    <string name="tabMenuText_quiz">단축키 퀴즈</string>
+    <string name="tabMenuText_favorite">나의 단축키</string>
+    <string name="tabMenuText_setting">필터 설정</string>
 </resources>

@@ -4,33 +4,58 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context="com.example.shortcutlibrary.MainActivity">
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/viewPager"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/viewPageBackground"
+        app:layout_constraintBottom_toTopOf="@+id/tabLayout"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="0dp" />
 
     <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        app:tabMode="fixed"
+        app:tabGravity="fill"
+        app:tabBackground="@color/colorTabBackground"
+        app:tabIndicatorColor="@color/colorAccent"
+        app:tabIndicatorGravity="stretch"
+        app:tabTextColor="@color/colorTabText"
+        app:tabTextAppearance="@style/TabText"
+        app:tabSelectedTextColor="@color/colorTabSelectedText"
+        app:tabIconTint="@color/colorTabIcon"
         app:layout_constraintBottom_toBottomOf="parent"
         tools:layout_editor_absoluteX="0dp">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="단축키 사전" />
+            android:icon="@drawable/ic_search"
+            android:text="@string/tabMenuText_search" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="단축키 퀴즈" />
+            android:icon="@drawable/ic_quiz"
+            android:text="@string/tabMenuText_quiz" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="나의 단축키" />
+            android:icon="@drawable/ic_star"
+            android:text="@string/tabMenuText_favorite" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="필터 설정" />
+            android:icon="@drawable/ic_settings"
+            android:text="@string/tabMenuText_setting" />
     </com.google.android.material.tabs.TabLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
