@@ -1,6 +1,9 @@
 package com.example.shortcutlibrary
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
@@ -10,6 +13,9 @@ import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import java.io.*
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 
 
 open class Shortcut(
@@ -31,17 +37,36 @@ open class Shortcut(
     var commandKeyStr : String = ""
 ) : RealmObject()
 
-//open class Setting : RealmObject() {
-//    //아래에 변수가 추가될 경우 setting 클래스에서도 변수 리스트에 추가해 줘야 함!!!
-//    var powerpoint : Boolean = true,
-//    var excel : Boolean = true,
-//    var word : Boolean = true,
-//    var hangul : Boolean = true,
-//    var chrome : Boolean = true,
-//    var windows : Boolean = true
-//}
+open class FilterSetting(
+    //아래에 변수가 추가될 경우 setting 클래스에서도 변수 리스트에 추가해 줘야 함!!!
+    @PrimaryKey
+    var pk : Int = 0,
+    var powerpoint : Boolean = true,
+    var excel : Boolean = true,
+    var word : Boolean = true,
+    var hangul : Boolean = true,
+    var chrome : Boolean = true,
+    var windows : Boolean = true
+) : RealmObject()
+
+
+class SplashActivity : AppCompatActivity() {
+
+    val SPLASH_VIEW_TIME: Long = 1200 //스플래시 화면을 보여줌 (ms)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        Handler().postDelayed({ //delay를 위한 handler
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }, SPLASH_VIEW_TIME)
+    }
+}
 
 class MainActivity : AppCompatActivity() {
+    private val dBVersion = "200407"
+    private val dBVersionFileName = "$dBVersion.txt"
 
     var tabLayout: TabLayout? = null
     var viewPager: ViewPager? = null
@@ -50,7 +75,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        getCsvFile()
+        initDB()
 
         tabLayout = findViewById<TabLayout>(R.id.tabLayout)
         viewPager = findViewById<ViewPager>(R.id.viewPager)
@@ -81,14 +106,80 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun getCsvFile() {
-        var fileReader: BufferedReader? = null
+    fun initDB() {
+        //최신 DB파일인지 체크
+        val checkDB: Boolean = checkFileExist(dBVersionFileName)
 
+        //최신 DB파일이라면
+        if (checkDB) {
+            Log.d("DB체크", "최신 DB입니다.")
+        } else { //최신 DB파일이 아니라면
+            Log.d("DB체크", "최신 DB가 아닙니다.")
+            Log.d("DB생성", "DB파일을 새롭게 생성합니다.")
+
+            //즐겨찾기 정보 복원  -- 추후 작업필요!!!
+            fun recoverFavoriteData() {
+
+            }
+
+            //필터세팅 정보 복원 -- 추후 작업필요!!!
+            fun recoverFilterSettingData() {
+
+            }
+
+            //CSV파일에서 DB로 데이터 이전
+            initDataFromCsvFile()
+
+            //버전 관리를 위한 파일 생성
+            val path = applicationContext.filesDir.toString() + "/" + dBVersionFileName
+            val text = dBVersion
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    Files.write(Paths.get(path), text.toByteArray(), StandardOpenOption.CREATE)
+                } catch (e: IOException) {
+                    Log.d("오류", "버전 관리파일 생성 실패 (API Ver.26 over)")
+                }
+            } else {
+                //API Level 26 미만에서는 예전 방식으로 진행해야...
+                var fop: FileOutputStream? = null
+                val file: File
+
+                try {
+                    file = File(path)
+                    fop = FileOutputStream(file)
+
+                    // if file doesnt exists, then create it
+                    if (!file.exists()) {
+                        file.createNewFile()
+                    }
+
+                    // get the content in bytes
+                    val contentInBytes = text.toByteArray()
+                    fop.write(contentInBytes)
+                    fop.flush()
+                    fop.close()
+                } catch (e: IOException) {
+                    Log.d("오류", "버전 관리파일 생성 실패 (API Ver.26 under)")
+                    e.printStackTrace()
+                } finally {
+                    try {
+                        fop?.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+            Log.d("DB생성결과", "DB파일 생성완료")
+        }
+    }
+
+    fun initDataFromCsvFile() {
+        var fileReader: BufferedReader? = null
         try {
             val shortcut_from_csv_array = ArrayList<Array<Any>>()
             var line: String?
 
-            val inputStream: InputStream = resources.openRawResource(R.raw.org_db_200407)
+            val inputStream: InputStream = resources.openRawResource(R.raw.org_db)
             fileReader = BufferedReader(InputStreamReader(inputStream));
 
             // Read the file line by line starting from the second line
@@ -107,7 +198,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         }
-                        val shortcut : Array<Any> = arrayOf(
+                        val thisShortcut : Array<Any> = arrayOf(
                             tokens[0].toInt(),
                             tokens[1],
                             tokens[2],
@@ -124,7 +215,7 @@ class MainActivity : AppCompatActivity() {
                             tokens[13].toInt(),
                             commandKeyStr
                         )
-                        shortcut_from_csv_array.add(shortcut)
+                        shortcut_from_csv_array.add(thisShortcut)
                     }
                     line = fileReader.readLine()
                 }
@@ -144,31 +235,55 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setShortcutDB(dataArray : ArrayList<Array<Any>>) {
-        for (items in dataArray) {
-            for (item in items) {
-                Log.d("item", item.toString())
-            }
-        }
         Realm.init(this)
         val realm= Realm.getDefaultInstance()
         val shortcut = Shortcut()
-//        shortcut.pk = 1
-//        shortcut.category = "powerpoint"
-//        shortcut.category_hangul = "파워포인트"
-//        shortcut.ctrl = ""
-//        shortcut.alt = ""
-//        shortcut.shift = ""
-//        shortcut.key1 = ""
-//        shortcut.key2 = ""
-//        shortcut.key3 = ""
-//        shortcut.key4 = ""
-//        shortcut.commandString = "test"
-//        shortcut.searchString = ""
-//        shortcut.score = 0
-//        shortcut.favorite = 0
-//        shortcut.commandKeyStr = ""
-//        realm.executeTransaction { realm ->
-//            realm.copyToRealmOrUpdate(shortcut)
-//        }
+        val filterSetting = FilterSetting()
+        //단축키 정보 DB 입력
+        for (items in dataArray) {
+            shortcut.pk = items[0].toString().toInt()
+            shortcut.category = items[1].toString()
+            shortcut.category_hangul = items[2].toString()
+            shortcut.ctrl = items[3].toString()
+            shortcut.alt = items[4].toString()
+            shortcut.shift = items[5].toString()
+            shortcut.key1 = items[6].toString()
+            shortcut.key2 = items[7].toString()
+            shortcut.key3 = items[8].toString()
+            shortcut.key4 = items[9].toString()
+            shortcut.commandString = items[10].toString()
+            shortcut.searchString = items[11].toString()
+            shortcut.score = items[12].toString().toInt()
+            shortcut.favorite = items[13].toString().toInt()
+            shortcut.commandKeyStr = items[14].toString()
+            realm.executeTransaction { realm ->
+                realm.copyToRealmOrUpdate(shortcut)
+            }
+        }
+        //핕러 설정 정보 DB 입력
+        filterSetting.pk = 1
+        filterSetting.powerpoint = false
+        filterSetting.excel = false
+        filterSetting.word = false
+        filterSetting.hangul = false
+        filterSetting.chrome = false
+        filterSetting.windows = false
+        realm.executeTransaction { realm ->
+            realm.copyToRealmOrUpdate(filterSetting)
+        }
     }
+
+    fun checkFileExist(fileName: String): Boolean {
+        //버전관리 파일이 존재하는가? 체크
+        val fileList = applicationContext.filesDir.list()
+        var fileExistCheck : Boolean = false
+        for (file in fileList) {
+            if (file == fileName) {
+                fileExistCheck = true
+                break
+            }
+        }
+        return fileExistCheck
+    }
+
 }
