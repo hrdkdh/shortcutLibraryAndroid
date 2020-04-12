@@ -9,7 +9,7 @@ import com.google.android.material.tabs.TabLayout
 import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
-import io.realm.kotlin.where
+import java.io.*
 
 
 open class Shortcut(
@@ -50,27 +50,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        Realm.init(this)
-        val realm= Realm.getDefaultInstance()
-        val shortcut = Shortcut()
-        shortcut.pk = 1
-        shortcut.category = "powerpoint"
-        shortcut.category_hangul = "파워포인트"
-        shortcut.ctrl = ""
-        shortcut.alt = ""
-        shortcut.shift = ""
-        shortcut.key1 = ""
-        shortcut.key2 = ""
-        shortcut.key3 = ""
-        shortcut.key4 = ""
-        shortcut.commandString = "test"
-        shortcut.searchString = ""
-        shortcut.score = 0
-        shortcut.favorite = 0
-        shortcut.commandKeyStr = ""
-        realm.executeTransaction { realm ->
-            realm.copyToRealmOrUpdate(shortcut)
-        }
+        getCsvFile()
 
         tabLayout = findViewById<TabLayout>(R.id.tabLayout)
         viewPager = findViewById<ViewPager>(R.id.viewPager)
@@ -99,5 +79,96 @@ class MainActivity : AppCompatActivity() {
 
             }
         })
+    }
+
+    fun getCsvFile() {
+        var fileReader: BufferedReader? = null
+
+        try {
+            val shortcut_from_csv_array = ArrayList<Array<Any>>()
+            var line: String?
+
+            val inputStream: InputStream = resources.openRawResource(R.raw.org_db_200407)
+            fileReader = BufferedReader(InputStreamReader(inputStream));
+
+            // Read the file line by line starting from the second line
+            line = fileReader.readLine()
+            while (line != null) {
+                val tokens = line.split(",")
+                if (tokens.isNotEmpty()) {
+                    if (tokens[0] != "pk") {
+                        var commandKeyStr = ""
+                        for (i in 3..9) {
+                            if (tokens[i] != "") {
+                                if (commandKeyStr =="") {
+                                    commandKeyStr = tokens[i]
+                                } else {
+                                    commandKeyStr = commandKeyStr + "+" + tokens[i]
+                                }
+                            }
+                        }
+                        val shortcut : Array<Any> = arrayOf(
+                            tokens[0].toInt(),
+                            tokens[1],
+                            tokens[2],
+                            tokens[3],
+                            tokens[4],
+                            tokens[5],
+                            tokens[6],
+                            tokens[7],
+                            tokens[8],
+                            tokens[9],
+                            tokens[10],
+                            tokens[11],
+                            tokens[12].toInt(),
+                            tokens[13].toInt(),
+                            commandKeyStr
+                        )
+                        shortcut_from_csv_array.add(shortcut)
+                    }
+                    line = fileReader.readLine()
+                }
+            }
+            setShortcutDB(shortcut_from_csv_array)
+        } catch (e: Exception) {
+            Log.d("error", "Reading CSV Error!")
+            e.printStackTrace()
+        } finally {
+            try {
+                fileReader?.close()
+            } catch (e: IOException) {
+                Log.d("error", "Closing fileReader Error!")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun setShortcutDB(dataArray : ArrayList<Array<Any>>) {
+        for (items in dataArray) {
+            for (item in items) {
+                Log.d("item", item.toString())
+            }
+        }
+        Realm.init(this)
+        val realm= Realm.getDefaultInstance()
+        val shortcut = Shortcut()
+//        shortcut.pk = 1
+//        shortcut.category = "powerpoint"
+//        shortcut.category_hangul = "파워포인트"
+//        shortcut.ctrl = ""
+//        shortcut.alt = ""
+//        shortcut.shift = ""
+//        shortcut.key1 = ""
+//        shortcut.key2 = ""
+//        shortcut.key3 = ""
+//        shortcut.key4 = ""
+//        shortcut.commandString = "test"
+//        shortcut.searchString = ""
+//        shortcut.score = 0
+//        shortcut.favorite = 0
+//        shortcut.commandKeyStr = ""
+//        realm.executeTransaction { realm ->
+//            realm.copyToRealmOrUpdate(shortcut)
+//        }
     }
 }
