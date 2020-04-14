@@ -17,7 +17,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
-
 open class Shortcut(
     @PrimaryKey
     var pk : Int = 0,
@@ -65,7 +64,7 @@ class SplashActivity : AppCompatActivity() {
 }
 
 class MainActivity : AppCompatActivity() {
-    private val dBVersion = "200407"
+    private val dBVersion = "200408"
     private val dBVersionFileName = "$dBVersion.txt"
 
     var tabLayout: TabLayout? = null
@@ -275,15 +274,18 @@ class MainActivity : AppCompatActivity() {
 
     fun checkFileExist(fileName: String): Boolean {
         //버전관리 파일이 존재하는가? 체크
-        val fileList = applicationContext.filesDir.list()
         var fileExistCheck : Boolean = false
-        for (file in fileList) {
-            if (file == fileName) {
-                fileExistCheck = true
-                break
+        try {
+            val fileList = applicationContext.filesDir.list()
+            for (file in fileList!!) {
+                if (file == fileName) {
+                    fileExistCheck = true
+                    break
+                }
             }
+        } catch(e: Exception) {
+            Log.d("오류", "파일 탐색 실패")
         }
         return fileExistCheck
     }
-
 }
