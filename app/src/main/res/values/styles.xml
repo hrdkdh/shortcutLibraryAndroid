@@ -15,7 +15,15 @@
 
     <style name="TabText" parent="TextAppearance.AppCompat">
         <item name="android:textSize">12sp</item>
-        <item name="android:fontFamily">@font/gmarket_sans_medium</item>
+        <item name="android:fontFamily">@font/apple_neo_m</item>
+    </style>
+
+    <style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog">
+        <item name="colorAccent">#515151</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:fontFamily">@font/apple_neo_b</item>
+        <item name="android:windowMinWidthMajor">98%</item>
+        <item name="android:windowMinWidthMinor">98%</item>
     </style>
 
 </resources>
