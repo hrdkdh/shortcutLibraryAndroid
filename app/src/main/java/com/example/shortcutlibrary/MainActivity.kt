@@ -34,7 +34,50 @@ open class Shortcut(
     var score : Int = 0,
     var favorite : Int = 0,
     var commandKeyStr : String = ""
-) : RealmObject()
+) : RealmObject() {
+
+    fun getCategoryNameArr(categoryLanguage: String) : Array<String> {
+        if (categoryLanguage == "Eng") {
+            return arrayOf("powerpoint", "excel", "word", "hangul", "chrome", "windows")
+        } else {
+            return arrayOf("파워포인트", "엑셀", "워드", "아래아한글", "크롬", "윈도우")
+        }
+    }
+    //항목이 추가될 때를 대비!  fragment에서 파편화되지 않도록 한번에 관리하기 위해 여기에 관련 메쏘드와 변수를 등록함
+    fun getCategoryNameHangul(shortCutCategoryEng : String) : String {
+        when (shortCutCategoryEng) {
+            "powerpoint" -> return "파워포인트"
+            "excel" -> return "엑셀"
+            "word" -> return "워드"
+            "hangul" -> return "아래아한글"
+            "chrome" -> return "크롬"
+            "windows" -> return "윈도우"
+            else -> return "none"
+        }
+    }
+    fun getDrawableIcon(shortCutCategoryEng : String) : Int {
+        when (shortCutCategoryEng) {
+            "powerpoint" -> return R.drawable.ic_powerpoint
+            "excel" -> return R.drawable.ic_excel
+            "word" -> return R.drawable.ic_word
+            "hangul" -> return R.drawable.ic_hangul
+            "chrome" -> return R.drawable.ic_chrome
+            "windows" -> return R.drawable.ic_windows
+            else -> return R.drawable.ic_none
+        }
+    }
+    fun getDrawableIconByHangul(shortCutCategoryHangul : String) : Int {
+        when (shortCutCategoryHangul) {
+            "파워포인트" -> return R.drawable.ic_powerpoint
+            "엑셀" -> return R.drawable.ic_excel
+            "워드" -> return R.drawable.ic_word
+            "아래아한글" -> return R.drawable.ic_hangul
+            "크롬" -> return R.drawable.ic_chrome
+            "윈도우" -> return R.drawable.ic_windows
+            else -> return R.drawable.ic_none
+        }
+    }
+}
 
 open class FilterSetting(
     //아래에 변수가 추가될 경우 setting 클래스에서도 변수 리스트에 추가해 줘야 함!!!
@@ -64,7 +107,7 @@ class SplashActivity : AppCompatActivity() {
 }
 
 class MainActivity : AppCompatActivity() {
-    private val dBVersion = "200408"
+    private val dBVersion = "200409"
     private val dBVersionFileName = "$dBVersion.txt"
 
     var tabLayout: TabLayout? = null
@@ -261,12 +304,12 @@ class MainActivity : AppCompatActivity() {
         }
         //핕러 설정 정보 DB 입력
         filterSetting.pk = 1
-        filterSetting.powerpoint = false
-        filterSetting.excel = false
-        filterSetting.word = false
-        filterSetting.hangul = false
-        filterSetting.chrome = false
-        filterSetting.windows = false
+        filterSetting.powerpoint = true
+        filterSetting.excel = true
+        filterSetting.word = true
+        filterSetting.hangul = true
+        filterSetting.chrome = true
+        filterSetting.windows = true
         realm.executeTransaction { realm ->
             realm.copyToRealmOrUpdate(filterSetting)
         }
