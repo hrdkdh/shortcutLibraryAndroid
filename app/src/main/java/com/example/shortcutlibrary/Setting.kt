@@ -10,7 +10,7 @@ import android.widget.Toast
 import io.realm.DynamicRealm
 import io.realm.RealmConfiguration
 
-class setting : Fragment() {
+class Setting : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

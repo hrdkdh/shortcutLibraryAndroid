@@ -2,9 +2,11 @@ package com.example.shortcutlibrary
 
 import android.app.AlertDialog
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.ColorFilter
 import android.graphics.PorterDuff
-import android.net.sip.SipSession
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -14,18 +16,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
-import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.view.drawToBitmap
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.realm.*
-import kotlin.collections.ArrayList
+import kotlinx.android.synthetic.main.fragment_search.*
 
+var thisSearchFragmentView: View? = null
+var recyclerView: RecyclerView? = null
+var adapter: RecyclerView.Adapter<*>? = null
 
-class search : Fragment() {
+class Search : Fragment() {
 
-    var recyclerView: RecyclerView? = null
-    var adapter: RecyclerView.Adapter<*>? = null
     var layoutManager: RecyclerView.LayoutManager? = null
 
     override fun onCreateView(
@@ -33,6 +37,7 @@ class search : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val thisView = inflater.inflate(R.layout.fragment_search, container, false)
+        thisSearchFragmentView = thisView
         recyclerView = thisView.findViewById<RecyclerView>(R.id.recycler_view)
 
         // 리사이클러뷰의 notify()처럼 데이터가 변했을 때 성능을 높일 때 사용한다.
@@ -42,7 +47,6 @@ class search : Fragment() {
         recyclerView!!.layoutManager = layoutManager
 
         val searchTextArea = thisView.findViewById<EditText>(R.id.searchTextArea)
-        var searchStr: String = searchTextArea.text.toString()
         searchTextArea.onFocusChangeListener = View.OnFocusChangeListener { view, hasFocus ->
             if (!hasFocus) {
                 val imm = thisView.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -51,22 +55,25 @@ class search : Fragment() {
         }
         searchTextArea.addTextChangedListener(object : TextWatcher{
             override fun afterTextChanged(p0: Editable?) {
-                searchStr = searchTextArea.text.toString()
-                printShortCutList(searchStr)
+                printShortCutList()
             }
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) { }
         })
 
-        printShortCutList(searchStr)
+        printShortCutList()
 
         // Inflate the layout for this fragment
         return thisView
     }
 
-    fun printShortCutList(searchStr: String) {
+    //단축키 출력 메쏘드
+    fun printShortCutList() {
+        val searchTextArea = thisSearchFragmentView!!.findViewById<EditText>(R.id.searchTextArea)
+        val searchStr: String = searchTextArea.text.toString()
+
         //데이터 로드
-        Realm.init(context!!)
+        Realm.init(thisSearchFragmentView!!.context!!)
         val realmConfig = RealmConfiguration.Builder().build()
         val realm = DynamicRealm.getInstance(realmConfig)
         val query = realm.where("Shortcut")
@@ -179,6 +186,7 @@ class search : Fragment() {
         adapter = RecyclerViewAdapter(pkSet, iconSet, categoryHangulSet, commandKeyStrSet, commandStringSet, favoriteSet)
         recyclerView!!.adapter = adapter
     }
+
 }
 
 class RecyclerViewAdapter (
@@ -193,7 +201,6 @@ class RecyclerViewAdapter (
 
     // 리사이클러뷰에 들어갈 뷰 홀더, 그리고 그 뷰 홀더에 들어갈 아이템들을 지정
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        var pk: TextView = view.findViewById(R.id.shortcut_pk)
         var listItem: LinearLayout = view.findViewById(R.id.list_item)
         var favoriteIcon: ImageView = view.findViewById(R.id.shortcut_favoriteIcon)
         var imageView: ImageView = view.findViewById(R.id.shortcut_icon)
@@ -212,26 +219,31 @@ class RecyclerViewAdapter (
 
     // 실제 각 뷰 홀더에 데이터를 연결해주는 함수
     override fun onBindViewHolder(ViewHolder: ViewHolder, i: Int) {
-        ViewHolder.pk.text = pkSet[i].toString()
         ViewHolder.imageView.setBackgroundResource(iconSet[i])
         ViewHolder.categoryHangulTextView.text = categoryHangulSet[i]
         ViewHolder.commandKeyStrTextView.text = commandKeyStrSet[i]
         ViewHolder.commandStringTextView.text = commandStringSet[i]
+        val newStatus: Int
+        val positiveButtonStr: String
         if (favoriteSet[i] > 0) {
+            newStatus = 0
+            positiveButtonStr = "나의 단축키에서 삭제"
             ViewHolder.favoriteIcon.setImageResource(R.drawable.ic_star_fill)
             ViewHolder.favoriteIcon.setColorFilter(Color.parseColor("#03A9F4"), PorterDuff.Mode.SRC_IN)
-            ViewHolder.favoriteIcon.tag = "true"
+        } else {
+            newStatus = 1
+            positiveButtonStr = "나의 단축키로 등록"
+            ViewHolder.favoriteIcon.setImageResource(R.drawable.ic_star)
+            ViewHolder.favoriteIcon.setColorFilter(Color.parseColor("#AAAAAA"), PorterDuff.Mode.SRC_IN)
+        }
+
+        if (categoryHangulSet[i] == "none") {
+            ViewHolder.favoriteIcon.visibility = View.INVISIBLE
         }
 
         //나의 단축키 클릭 이벤트 리스너
-        ViewHolder.favoriteIcon.setOnClickListener(View.OnClickListener { view ->
-            val thisImage = view.findViewById<ImageView>(R.id.shortcut_favoriteIcon)
-//            val thisPk = view.findViewById<TextView>(R.id.shortcut_pk).text.toString()
-//            if (thisImage.tag == "false") {
-//                setFavorite(thisPk, 1)
-//            } else {
-//                setFavorite(thisPk, 0)
-//            }
+        ViewHolder.favoriteIcon.setOnClickListener(View.OnClickListener {
+            setFavorite(pkSet[i], commandStringSet[i], newStatus)
         })
 
         //클릭 이벤트 리스너
@@ -246,18 +258,13 @@ class RecyclerViewAdapter (
             val customAlertView = inflater.inflate(R.layout.custom_alert_dialog, null)
             val builder: AlertDialog.Builder = AlertDialog.Builder(context, R.style.MyAlertDialogStyle) //버튼 스타일은 별도로 지정
 
-            //builder.setTitle(thisTitleStr).setMessage(thisMessageStr) //서식이 들어간 커스텀 뷰로 대체함
-
             builder.setNegativeButton("닫기") { _, _ ->  }
-            builder.setPositiveButton("나의 단축키로 등록") { _, _ ->
+            builder.setPositiveButton(positiveButtonStr) { _, _ ->
                 //나의 단축키로 저장
                 val thisFavoriteImage = view.findViewById<ImageView>(R.id.shortcut_favoriteIcon)
                 thisFavoriteImage.setImageResource(R.drawable.ic_star_fill)
                 thisFavoriteImage.setColorFilter(Color.parseColor("#03A9F4"), PorterDuff.Mode.SRC_IN)
-                thisFavoriteImage.tag = "true"
-
-                //알림
-                Toast.makeText(context,"${thisTitleStr} : 나의 단축키로 콕~!", Toast.LENGTH_SHORT).show()
+                setFavorite(pkSet[i], commandStringSet[i], newStatus)
             }
             val alertDialog: AlertDialog = builder.create()
             customAlertView.findViewById<ImageView>(R.id.alertImageViewCustom).setImageResource(thisImage)
@@ -268,17 +275,35 @@ class RecyclerViewAdapter (
         })
     }
 
-    private fun setFavorite(pk: String, value: Int) {
-        val realmConfig = RealmConfiguration.Builder().build()
-        val realm = DynamicRealm.getInstance(realmConfig)
-        realm.beginTransaction()
-        realm.where("ShortCut").equalTo("pk", pk.toInt()).findAll().setInt("pk", value)
-        realm.commitTransaction()
-    }
-
     //iOS의 numberOfRows와 동일. 리사이클러뷰안에 들어갈 뷰 홀더의 개수
     override fun getItemCount(): Int {
         return commandKeyStrSet.size
+    }
+
+    //나의 단축키 등록 메쏘드
+    private fun setFavorite(pk: Int, commandString: String, newStatus: Int) {
+        val nowScrollPosition = recyclerView!!.computeVerticalScrollOffset()
+        Log.d("마지막 스크롤 위치", nowScrollPosition.toString())
+
+        val realmConfig = RealmConfiguration.Builder().build()
+        val realm = DynamicRealm.getInstance(realmConfig)
+        realm.beginTransaction()
+        realm.where("Shortcut").equalTo("pk", pk).findAll().setInt("favorite", newStatus)
+        realm.commitTransaction()
+
+        //알림
+        if (newStatus==1) {
+            Toast.makeText(thisSearchFragmentView!!.context, "$commandString : 나의 단축키로 콕~!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(thisSearchFragmentView!!.context, "$commandString : 나의 단축키에서 삭제", Toast.LENGTH_SHORT).show()
+        }
+
+        //리로드
+        Search().printShortCutList()
+
+        //스크롤바 원위치
+        recyclerView!!.scrollToPosition(nowScrollPosition)
+        Log.d("로드 후 스크롤 위치", recyclerView!!.computeVerticalScrollOffset().toString())
     }
 }
 

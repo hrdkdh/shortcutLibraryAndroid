@@ -12,16 +12,16 @@ class MyAdapter(private val myContext: Context, fm: FragmentManager, internal va
     override fun getItem(position: Int): Fragment? {
         when (position) {
             0 -> {
-                return search()
+                return Search()
             }
             1 -> {
-                return quiz()
+                return Quiz()
             }
             2 -> {
-                return favorite()
+                return MyFavorite()
             }
             3 -> {
-                return setting()
+                return Setting()
             }
             else -> return null
         }
