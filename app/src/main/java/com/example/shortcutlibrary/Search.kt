@@ -2,11 +2,8 @@ package com.example.shortcutlibrary
 
 import android.app.AlertDialog
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.ColorFilter
 import android.graphics.PorterDuff
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -16,26 +13,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
-import androidx.core.graphics.drawable.toDrawable
-import androidx.core.view.drawToBitmap
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.realm.*
-import kotlinx.android.synthetic.main.fragment_search.*
 
 var thisSearchFragmentView: View? = null
 var recyclerView: RecyclerView? = null
 var adapter: RecyclerView.Adapter<*>? = null
+var layoutManager: RecyclerView.LayoutManager? = null
 
 class Search : Fragment() {
-
-    var layoutManager: RecyclerView.LayoutManager? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
         val thisView = inflater.inflate(R.layout.fragment_search, container, false)
         thisSearchFragmentView = thisView
         recyclerView = thisView.findViewById<RecyclerView>(R.id.recycler_view)
@@ -159,9 +153,9 @@ class Search : Fragment() {
                         .or().contains("commandKeyStr", searchStr, Case.INSENSITIVE)
                         .endGroup()
                 }
-                shortcuts = query.findAll()
+                shortcuts = query.sort("printOrder", Sort.ASCENDING).findAll()
             } else {
-                shortcuts = query.findAll()
+                shortcuts = query.sort("printOrder", Sort.ASCENDING).findAll()
             }
             Log.d("단축키 Count", shortcuts.count().toString())
             for (item in shortcuts) {
@@ -177,7 +171,7 @@ class Search : Fragment() {
             iconSet.add(R.drawable.ic_none)
             pkSet.add(0)
             categoryHangulSet.add("none")
-            commandKeyStrSet.add("필터가 모두 Off 되었습니다.")
+            commandKeyStrSet.add("필터가 Off 되었습니다.")
             commandStringSet.add("필터 스위치를 변경해 주세요.")
             favoriteSet.add(0)
         }
@@ -186,7 +180,6 @@ class Search : Fragment() {
         adapter = RecyclerViewAdapter(pkSet, iconSet, categoryHangulSet, commandKeyStrSet, commandStringSet, favoriteSet)
         recyclerView!!.adapter = adapter
     }
-
 }
 
 class RecyclerViewAdapter (
@@ -196,7 +189,7 @@ class RecyclerViewAdapter (
     private val commandKeyStrSet: ArrayList<String>,
     private val commandStringSet: ArrayList<String>,
     private val favoriteSet: ArrayList<Int>
-    ) :
+) :
     RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>() {
 
     // 리사이클러뷰에 들어갈 뷰 홀더, 그리고 그 뷰 홀더에 들어갈 아이템들을 지정
@@ -223,8 +216,10 @@ class RecyclerViewAdapter (
         ViewHolder.categoryHangulTextView.text = categoryHangulSet[i]
         ViewHolder.commandKeyStrTextView.text = commandKeyStrSet[i]
         ViewHolder.commandStringTextView.text = commandStringSet[i]
+
         val newStatus: Int
         val positiveButtonStr: String
+
         if (favoriteSet[i] > 0) {
             newStatus = 0
             positiveButtonStr = "나의 단축키에서 삭제"
@@ -259,12 +254,18 @@ class RecyclerViewAdapter (
             val builder: AlertDialog.Builder = AlertDialog.Builder(context, R.style.MyAlertDialogStyle) //버튼 스타일은 별도로 지정
 
             builder.setNegativeButton("닫기") { _, _ ->  }
-            builder.setPositiveButton(positiveButtonStr) { _, _ ->
-                //나의 단축키로 저장
-                val thisFavoriteImage = view.findViewById<ImageView>(R.id.shortcut_favoriteIcon)
-                thisFavoriteImage.setImageResource(R.drawable.ic_star_fill)
-                thisFavoriteImage.setColorFilter(Color.parseColor("#03A9F4"), PorterDuff.Mode.SRC_IN)
-                setFavorite(pkSet[i], commandStringSet[i], newStatus)
+            if (categoryHangulSet[i] != "none") {
+                builder.setPositiveButton(positiveButtonStr) { _, _ ->
+                    //나의 단축키로 저장
+                    val thisFavoriteImage =
+                        view.findViewById<ImageView>(R.id.shortcut_favoriteIcon)
+                    thisFavoriteImage.setImageResource(R.drawable.ic_star_fill)
+                    thisFavoriteImage.setColorFilter(
+                        Color.parseColor("#03A9F4"),
+                        PorterDuff.Mode.SRC_IN
+                    )
+                    setFavorite(pkSet[i], commandStringSet[i], newStatus)
+                }
             }
             val alertDialog: AlertDialog = builder.create()
             customAlertView.findViewById<ImageView>(R.id.alertImageViewCustom).setImageResource(thisImage)
@@ -273,6 +274,7 @@ class RecyclerViewAdapter (
             alertDialog.setView(customAlertView)
             alertDialog.show()
         })
+//        Log.d("i", i.toString())
     }
 
     //iOS의 numberOfRows와 동일. 리사이클러뷰안에 들어갈 뷰 홀더의 개수
@@ -282,9 +284,6 @@ class RecyclerViewAdapter (
 
     //나의 단축키 등록 메쏘드
     private fun setFavorite(pk: Int, commandString: String, newStatus: Int) {
-        val nowScrollPosition = recyclerView!!.computeVerticalScrollOffset()
-        Log.d("마지막 스크롤 위치", nowScrollPosition.toString())
-
         val realmConfig = RealmConfiguration.Builder().build()
         val realm = DynamicRealm.getInstance(realmConfig)
         realm.beginTransaction()
@@ -297,13 +296,15 @@ class RecyclerViewAdapter (
         } else {
             Toast.makeText(thisSearchFragmentView!!.context, "$commandString : 나의 단축키에서 삭제", Toast.LENGTH_SHORT).show()
         }
+        val lastScrollOffsetY = recyclerView!!.computeVerticalScrollOffset()
 
         //리로드
         Search().printShortCutList()
 
         //스크롤바 원위치
-        recyclerView!!.scrollToPosition(nowScrollPosition)
-        Log.d("로드 후 스크롤 위치", recyclerView!!.computeVerticalScrollOffset().toString())
+        Log.d("마지막 스크롤 위치", lastScrollOffsetY.toString())
+        //recyclerView!!.smoothScrollToPosition(lastScrollOffsetY) //smoothScrollToPosition은 item의 i 값으로 이동하는 메쏘드임
+        recyclerView!!.scrollBy(0, lastScrollOffsetY) //클릭 시의 스크롤로 이동하여 리스트 화면 변경 방지
     }
 }
 

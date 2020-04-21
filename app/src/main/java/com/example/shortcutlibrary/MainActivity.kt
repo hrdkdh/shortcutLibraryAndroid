@@ -9,9 +9,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.viewpager.widget.ViewPager
 import com.google.android.material.tabs.TabLayout
-import io.realm.Realm
-import io.realm.RealmObject
+import io.realm.*
 import io.realm.annotations.PrimaryKey
+import io.realm.kotlin.where
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -33,7 +33,8 @@ open class Shortcut(
     var searchString : String = "",
     var score : Int = 0,
     var favorite : Int = 0,
-    var commandKeyStr : String = ""
+    var commandKeyStr : String = "",
+    var printOrder: Int = 0
 ) : RealmObject() {
 
     fun getCategoryNameArr(categoryLanguage: String) : Array<String> {
@@ -107,8 +108,10 @@ class SplashActivity : AppCompatActivity() {
 }
 
 class MainActivity : AppCompatActivity() {
-    private val dBVersion = "200409"
+    private val dBVersion = "200410"
     private val dBVersionFileName = "$dBVersion.txt"
+    private var favoriteSavedData = ArrayList<Int>()
+    private var filterSavedData = mapOf<String, String>()
 
     var tabLayout: TabLayout? = null
     var viewPager: ViewPager? = null
@@ -159,15 +162,9 @@ class MainActivity : AppCompatActivity() {
             Log.d("DB체크", "최신 DB가 아닙니다.")
             Log.d("DB생성", "DB파일을 새롭게 생성합니다.")
 
-            //즐겨찾기 정보 복원  -- 추후 작업필요!!!
-            fun recoverFavoriteData() {
-
-            }
-
-            //필터세팅 정보 복원 -- 추후 작업필요!!!
-            fun recoverFilterSettingData() {
-
-            }
+            //나의 단축키와 필터 설정 정보 복원을 위해 미리 저장
+            favoriteSavedData = recoverFavoriteData()
+            filterSavedData = recoverFilterSettingData()
 
             //CSV파일에서 DB로 데이터 이전
             initDataFromCsvFile()
@@ -178,6 +175,7 @@ class MainActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 try {
                     Files.write(Paths.get(path), text.toByteArray(), StandardOpenOption.CREATE)
+                    Log.d("생성", "버전 관리파일 생성 성공 (API Ver.26 over)")
                 } catch (e: IOException) {
                     Log.d("오류", "버전 관리파일 생성 실패 (API Ver.26 over)")
                 }
@@ -200,6 +198,7 @@ class MainActivity : AppCompatActivity() {
                     fop.write(contentInBytes)
                     fop.flush()
                     fop.close()
+                    Log.d("생성", "버전 관리파일 생성 성공 (API Ver.26 under)")
                 } catch (e: IOException) {
                     Log.d("오류", "버전 관리파일 생성 실패 (API Ver.26 under)")
                     e.printStackTrace()
@@ -211,7 +210,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            Log.d("DB생성결과", "DB파일 생성완료")
         }
     }
 
@@ -255,13 +253,16 @@ class MainActivity : AppCompatActivity() {
                             tokens[11],
                             tokens[12].toInt(),
                             tokens[13].toInt(),
-                            commandKeyStr
+                            commandKeyStr,
+                            tokens[14].toInt()
                         )
                         shortcut_from_csv_array.add(thisShortcut)
                     }
                     line = fileReader.readLine()
                 }
             }
+
+            //DB업데이트
             setShortcutDB(shortcut_from_csv_array)
         } catch (e: Exception) {
             Log.d("error", "Reading CSV Error!")
@@ -277,45 +278,91 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setShortcutDB(dataArray : ArrayList<Array<Any>>) {
-        Realm.init(this)
-        val realm= Realm.getDefaultInstance()
-        val shortcut = Shortcut()
-        val filterSetting = FilterSetting()
-        //단축키 정보 DB 입력
-        for (items in dataArray) {
-            shortcut.pk = items[0].toString().toInt()
-            shortcut.category = items[1].toString()
-            shortcut.category_hangul = items[2].toString()
-            shortcut.ctrl = items[3].toString()
-            shortcut.alt = items[4].toString()
-            shortcut.shift = items[5].toString()
-            shortcut.key1 = items[6].toString()
-            shortcut.key2 = items[7].toString()
-            shortcut.key3 = items[8].toString()
-            shortcut.key4 = items[9].toString()
-            shortcut.commandString = items[10].toString()
-            shortcut.searchString = items[11].toString()
-            shortcut.score = items[12].toString().toInt()
-            shortcut.favorite = items[13].toString().toInt()
-            shortcut.commandKeyStr = items[14].toString()
-            realm.executeTransaction { realm ->
-                realm.copyToRealmOrUpdate(shortcut)
+        try {
+            Realm.init(this)
+            val realm = Realm.getDefaultInstance()
+            val shortcut = Shortcut()
+            val filterSetting = FilterSetting()
+
+            //단축키 정보 DB 입력
+            for (items in dataArray) {
+                shortcut.pk = items[0].toString().toInt()
+                shortcut.category = items[1].toString()
+                shortcut.category_hangul = items[2].toString()
+                shortcut.ctrl = items[3].toString()
+                shortcut.alt = items[4].toString()
+                shortcut.shift = items[5].toString()
+                shortcut.key1 = items[6].toString()
+                shortcut.key2 = items[7].toString()
+                shortcut.key3 = items[8].toString()
+                shortcut.key4 = items[9].toString()
+                shortcut.commandString = items[10].toString()
+                shortcut.searchString = items[11].toString()
+                shortcut.score = items[12].toString().toInt()
+                shortcut.favorite = items[13].toString().toInt()
+                shortcut.commandKeyStr = items[14].toString()
+                shortcut.printOrder = items[15].toString().toInt()
+                realm.executeTransaction { realm ->
+                    realm.copyToRealmOrUpdate(shortcut)
+                }
             }
+            //핕러 설정 정보 DB 입력
+            filterSetting.pk = 1
+            filterSetting.powerpoint = true
+            filterSetting.excel = true
+            filterSetting.word = true
+            filterSetting.hangul = true
+            filterSetting.chrome = true
+            filterSetting.windows = true
+            realm.executeTransaction { realm ->
+                realm.copyToRealmOrUpdate(filterSetting)
+            }
+            Log.d("DB생성결과", "DB파일 생성완료")
+        } catch(e : Exception) {
+            Log.d("DB생성결과", "DB파일 생성실패!!!")
+            e.printStackTrace()
         }
-        //핕러 설정 정보 DB 입력
-        filterSetting.pk = 1
-        filterSetting.powerpoint = true
-        filterSetting.excel = true
-        filterSetting.word = true
-        filterSetting.hangul = true
-        filterSetting.chrome = true
-        filterSetting.windows = true
-        realm.executeTransaction { realm ->
-            realm.copyToRealmOrUpdate(filterSetting)
+
+        try {
+            //기존 정보 복원을 위한 세팅
+            val realmConfig = RealmConfiguration.Builder().build()
+            val realmDynamic = DynamicRealm.getInstance(realmConfig)
+
+            if (favoriteSavedData.count()>0) {
+                var shortcuts: RealmResults<DynamicRealmObject>
+                //나의 단축키 정보 복원
+                for (item in favoriteSavedData) {
+                    shortcuts = realmDynamic.where("Shortcut")
+                        .equalTo("pk", item)
+                        .findAll()
+                    realmDynamic.beginTransaction()
+                    shortcuts.setInt("favorite", 1)
+                    realmDynamic.commitTransaction()
+                }
+                Log.d("복원", "나의 단축키 기존 정보 업데이트 성공")
+            }
+            //필터 설정 정보 복원
+            if (filterSavedData.count()>0) {
+                var filterSettings: RealmResults<DynamicRealmObject> =
+                    realmDynamic.where("FilterSetting").findAll()
+                for ((key, value) in filterSavedData) {
+                    var thisValue = false;
+                    if (value == "true") {
+                        thisValue = true
+                    }
+                    realmDynamic.beginTransaction()
+                    filterSettings.setBoolean(key, thisValue)
+                    realmDynamic.commitTransaction()
+                }
+                Log.d("복원", "필터설정 기존 정보 업데이트 성공")
+            }
+        } catch (e : Exception) {
+            Log.d("error", "나의 단축키, 필터설정 기존 정보 업데이트 에러!")
+            e.printStackTrace()
         }
     }
 
-    fun checkFileExist(fileName: String): Boolean {
+    private fun checkFileExist(fileName: String): Boolean {
         //버전관리 파일이 존재하는가? 체크
         var fileExistCheck : Boolean = false
         try {
@@ -330,5 +377,46 @@ class MainActivity : AppCompatActivity() {
             Log.d("오류", "파일 탐색 실패")
         }
         return fileExistCheck
+    }
+
+    //즐겨찾기 정보 배열로 저장
+    private fun recoverFavoriteData(): ArrayList<Int> {
+        var favoriteArray = ArrayList<Int>()
+        try {
+            Realm.init(this)
+            val realmConfig = RealmConfiguration.Builder().build()
+            val realm = Realm.getInstance(realmConfig)
+            val favorites = realm.where<Shortcut>().equalTo("favorite", 1.toInt()).findAll()
+            for (favorite in favorites) {
+                favoriteArray.add(favorite.pk)
+            }
+        } catch(e : Exception) {
+            Log.d("에러", "나의 단축키 저장 정보 로드 실패")
+            e.printStackTrace()
+        }
+        return favoriteArray
+    }
+
+    //필터세팅 정보 배열로 저장
+    private fun recoverFilterSettingData(): Map<String, String> {
+        var filterMap = hashMapOf<String, String>()
+        try {
+            Realm.init(this)
+            val realmConfig = RealmConfiguration.Builder().build()
+            val realm = DynamicRealm.getInstance(realmConfig)
+            val filterData = realm.where("FilterSetting").findFirst()
+            val categoryNames = Shortcut().getCategoryNameArr("Eng")
+            for (item in categoryNames) {
+                if (filterData!!.get(item)) {
+                    filterMap[item] = "true"
+                } else {
+                    filterMap[item] = "false"
+                }
+            }
+        } catch(e : Exception) {
+            Log.d("에러", "필터 세팅 저장 정보 로드 실패")
+            e.printStackTrace()
+        }
+        return filterMap
     }
 }
