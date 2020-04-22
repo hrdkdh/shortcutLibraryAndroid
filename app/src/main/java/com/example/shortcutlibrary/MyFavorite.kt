@@ -13,6 +13,9 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import io.realm.*
 import io.realm.kotlin.where
 
@@ -23,11 +26,19 @@ var layoutManagerMyFavorite: RecyclerView.LayoutManager? = null
 
 class MyFavorite : Fragment() {
 
+    lateinit var mAdView : AdView
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val thisView = inflater.inflate(R.layout.fragment_favorite, container, false)
+
+        MobileAds.initialize(thisView.context) {}
+        mAdView = thisView.findViewById(R.id.adView_favorite)
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
+
         thisFragmentViewMyFavorite = thisView
         recyclerViewMyFavorite = thisView.findViewById<RecyclerView>(R.id.recycler_view)
 

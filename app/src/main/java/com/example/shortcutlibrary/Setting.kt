@@ -7,16 +7,26 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
 import android.widget.Toast
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import io.realm.DynamicRealm
 import io.realm.RealmConfiguration
 
 class Setting : Fragment() {
+
+    lateinit var mAdView : AdView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val thisView = inflater.inflate(R.layout.fragment_setting, container, false)
+
+        MobileAds.initialize(thisView.context) {}
+        mAdView = thisView.findViewById(R.id.adView_setting)
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
 
         val realmConfig = RealmConfiguration.Builder().build()
         val realm = DynamicRealm.getInstance(realmConfig)

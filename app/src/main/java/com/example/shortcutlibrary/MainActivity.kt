@@ -17,6 +17,12 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
+//admob 앱 ID: ca-app-pub-4567650475621525~4565415172
+//단축키 사전 배너광고 ID : ca-app-pub-4567650475621525/7738373422
+//단축키 퀴즈 배너광고 ID : ca-app-pub-4567650475621525/6972086664 //전면 광고
+//나의 단축키 배너광고 ID : ca-app-pub-4567650475621525/8668311713
+//필터설정 배너광고 ID : ca-app-pub-4567650475621525/3224413347
+
 open class Shortcut(
     @PrimaryKey
     var pk : Int = 0,

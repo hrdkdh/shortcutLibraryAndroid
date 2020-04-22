@@ -5,11 +5,23 @@
     android:layout_height="match_parent"
     tools:context="com.example.shortcutlibrary.MyFavorite">
 
+    <com.google.android.gms.ads.AdView
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView_favorite"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="@string/adView_favorite_adId">
+    </com.google.android.gms.ads.AdView>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="0dp"
+        android:layout_marginTop="70dp"
         android:layout_marginBottom="80dp"/>
 
 

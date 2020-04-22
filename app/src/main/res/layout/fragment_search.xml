@@ -5,10 +5,22 @@
     android:layout_height="match_parent"
     tools:context="com.example.shortcutlibrary.Search">
 
+    <com.google.android.gms.ads.AdView
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView_search"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        ads:adSize="BANNER"
+        ads:adUnitId="@string/adView_Search_adId">
+    </com.google.android.gms.ads.AdView>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="60dp"
         android:orientation="vertical">
 
         <com.google.android.material.textfield.TextInputLayout
@@ -26,7 +38,7 @@
                 android:focusable="auto"
                 android:fontFamily="@font/apple_neo_m"
                 android:gravity="center_vertical"
-                android:hint="단축키 검색"
+                android:hint="검색어를 입력하세요"
                 android:paddingStart="10dp"
                 android:paddingTop="4dp"
                 android:shadowColor="#7C7C7C"
@@ -43,7 +55,7 @@
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="70dp"
+        android:layout_marginTop="120dp"
         android:layout_marginBottom="80dp"/>
 
 

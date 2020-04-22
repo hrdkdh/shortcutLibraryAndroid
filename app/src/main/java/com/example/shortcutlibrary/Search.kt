@@ -16,6 +16,9 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import io.realm.*
 
 var thisSearchFragmentView: View? = null
@@ -25,12 +28,19 @@ var layoutManager: RecyclerView.LayoutManager? = null
 
 class Search : Fragment() {
 
+    lateinit var mAdView : AdView
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         val thisView = inflater.inflate(R.layout.fragment_search, container, false)
+
+        MobileAds.initialize(thisView.context) {}
+        mAdView = thisView.findViewById(R.id.adView_search)
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
+
         thisSearchFragmentView = thisView
         recyclerView = thisView.findViewById<RecyclerView>(R.id.recycler_view)
 
