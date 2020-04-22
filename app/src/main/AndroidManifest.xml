@@ -12,7 +12,7 @@
         android:theme="@style/AppThemeMain">
 
         <!--Splash Activity-->
-        <activity android:name=".SplashActivity"
+        <activity android:name="com.hrdkdh.shortcutlibrary.SplashActivity"
             android:screenOrientation="portrait"
             android:theme="@style/SplashTheme"
             tools:ignore="LockedOrientationActivity">
@@ -23,7 +23,7 @@
         </activity>
         <!--Splash Activity-->
 
-        <activity android:name=".MainActivity"
+        <activity android:name="com.hrdkdh.shortcutlibrary.MainActivity"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity" />
 

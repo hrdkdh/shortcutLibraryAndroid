@@ -1,4 +1,4 @@
-package com.example.shortcutlibrary
+package com.hrdkdh.shortcutlibrary
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.example.shortcutlibrary.R
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.InterstitialAd
@@ -256,7 +257,8 @@ class Quiz : Fragment(), View.OnClickListener {
         var correctOptionStr: String?
         var correctOptionCate = ""
 
-        view!!.findViewById<ImageView>(R.id.quiz_question_icon).setImageResource(Shortcut().getDrawableIcon(categoryNameEng))
+        view!!.findViewById<ImageView>(R.id.quiz_question_icon).setImageResource(
+            Shortcut().getDrawableIcon(categoryNameEng))
         view!!.findViewById<TextView>(R.id.quiz_question_icon_category_name).text = categoryNameKor
         if (cate == 1) { //단축키 명령어가 문제로 나오는 유형
             correctOptionCate = "commandString"

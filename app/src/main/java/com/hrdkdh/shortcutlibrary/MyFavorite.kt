@@ -1,4 +1,4 @@
-package com.example.shortcutlibrary
+package com.hrdkdh.shortcutlibrary
 
 import android.app.AlertDialog
 import android.content.Context
@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.shortcutlibrary.R
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
@@ -40,13 +41,16 @@ class MyFavorite : Fragment() {
         mAdView.loadAd(adRequest)
 
         thisFragmentViewMyFavorite = thisView
-        recyclerViewMyFavorite = thisView.findViewById<RecyclerView>(R.id.recycler_view)
+        recyclerViewMyFavorite = thisView.findViewById<RecyclerView>(
+            R.id.recycler_view
+        )
 
         // 리사이클러뷰의 notify()처럼 데이터가 변했을 때 성능을 높일 때 사용한다.
         recyclerViewMyFavorite!!.setHasFixedSize(true)
 
         layoutManagerMyFavorite = LinearLayoutManager(context)
-        recyclerViewMyFavorite!!.layoutManager = layoutManagerMyFavorite
+        recyclerViewMyFavorite!!.layoutManager =
+            layoutManagerMyFavorite
 
         printShortCutList()
 
@@ -90,14 +94,16 @@ class MyFavorite : Fragment() {
         }
 
         // 어댑터 할당, 어댑터는 기본 어댑터를 확장한 커스텀 어댑터를 사용할 것이다.
-        adapterMyFavorite = RecyclerViewAdapter(
-            pkSet,
-            iconSet,
-            categoryHangulSet,
-            commandKeyStrSet,
-            commandStringSet
-        )
-        recyclerViewMyFavorite!!.adapter = adapterMyFavorite
+        adapterMyFavorite =
+            RecyclerViewAdapter(
+                pkSet,
+                iconSet,
+                categoryHangulSet,
+                commandKeyStrSet,
+                commandStringSet
+            )
+        recyclerViewMyFavorite!!.adapter =
+            adapterMyFavorite
     }
 
     private class RecyclerViewAdapter (
@@ -124,7 +130,9 @@ class MyFavorite : Fragment() {
         override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): ViewHolder {
             val holderView: View = LayoutInflater.from(viewGroup.context)
                 .inflate(R.layout.search_list_view, viewGroup, false)
-            return ViewHolder(holderView)
+            return ViewHolder(
+                holderView
+            )
         }
 
         // 실제 각 뷰 홀더에 데이터를 연결해주는 함수
@@ -158,7 +166,9 @@ class MyFavorite : Fragment() {
                 val context: Context = view.context
                 val inflater = LayoutInflater.from(context)
                 val customAlertView = inflater.inflate(R.layout.custom_alert_dialog, null)
-                val builder: AlertDialog.Builder = AlertDialog.Builder(context, R.style.MyAlertDialogStyle) //버튼 스타일은 별도로 지정
+                val builder: AlertDialog.Builder = AlertDialog.Builder(context,
+                    R.style.MyAlertDialogStyle
+                ) //버튼 스타일은 별도로 지정
 
                 builder.setNegativeButton("닫기") { _, _ ->  }
                 if (categoryHangulSet[i] != "none") {

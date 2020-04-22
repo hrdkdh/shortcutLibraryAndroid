@@ -1,4 +1,4 @@
-package com.example.shortcutlibrary
+package com.hrdkdh.shortcutlibrary
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Switch
 import android.widget.Toast
+import com.example.shortcutlibrary.R
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
@@ -38,7 +39,8 @@ class Setting : Fragment() {
             if (it.name != "pk") {
                 val thisFieldName : String = it.name
                 val thisSwitch = thisView.findViewWithTag<Switch>(thisFieldName)
-                val thisCategoryNameHangul = Shortcut().getCategoryNameHangul(thisFieldName)
+                val thisCategoryNameHangul = Shortcut()
+                    .getCategoryNameHangul(thisFieldName)
                 if (result[0]!![it.name]) {
                     thisSwitch.isChecked = true
                 }

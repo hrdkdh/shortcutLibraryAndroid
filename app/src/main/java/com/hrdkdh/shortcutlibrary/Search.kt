@@ -1,4 +1,4 @@
-package com.example.shortcutlibrary
+package com.hrdkdh.shortcutlibrary
 
 import android.app.AlertDialog
 import android.content.Context
@@ -16,6 +16,7 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.shortcutlibrary.R
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
@@ -42,13 +43,16 @@ class Search : Fragment() {
         mAdView.loadAd(adRequest)
 
         thisSearchFragmentView = thisView
-        recyclerView = thisView.findViewById<RecyclerView>(R.id.recycler_view)
+        recyclerView = thisView.findViewById<RecyclerView>(
+            R.id.recycler_view
+        )
 
         // 리사이클러뷰의 notify()처럼 데이터가 변했을 때 성능을 높일 때 사용한다.
         recyclerView!!.setHasFixedSize(true)
 
         layoutManager = LinearLayoutManager(context)
-        recyclerView!!.layoutManager = layoutManager
+        recyclerView!!.layoutManager =
+            layoutManager
 
         val searchTextArea = thisView.findViewById<EditText>(R.id.searchTextArea)
         searchTextArea.onFocusChangeListener = View.OnFocusChangeListener { view, hasFocus ->
@@ -73,7 +77,9 @@ class Search : Fragment() {
 
     //단축키 출력 메쏘드
     fun printShortCutList() {
-        val searchTextArea = thisSearchFragmentView!!.findViewById<EditText>(R.id.searchTextArea)
+        val searchTextArea = thisSearchFragmentView!!.findViewById<EditText>(
+            R.id.searchTextArea
+        )
         val searchStr: String = searchTextArea.text.toString()
 
         //데이터 로드
@@ -114,8 +120,10 @@ class Search : Fragment() {
             if (searchStr != "") {
                 val searchStrArr = searchStr.split(" ")
                 if (searchStrArr.count()>1) {
-                    val categoryNameArrEng: Array<String> = Shortcut().getCategoryNameArr("Eng")
-                    val categoryNameArrKor: Array<String> = Shortcut().getCategoryNameArr("Kor")
+                    val categoryNameArrEng: Array<String> = Shortcut()
+                        .getCategoryNameArr("Eng")
+                    val categoryNameArrKor: Array<String> = Shortcut()
+                        .getCategoryNameArr("Kor")
                     if (searchStrArr[0] in categoryNameArrEng || searchStrArr[0] in categoryNameArrKor) {
                         query.beginGroup().equalTo("category", searchStrArr[0]).or().equalTo("category_hangul", searchStrArr[0]).endGroup()
                         query.beginGroup()
@@ -187,8 +195,17 @@ class Search : Fragment() {
         }
 
         // 어댑터 할당, 어댑터는 기본 어댑터를 확장한 커스텀 어댑터를 사용할 것이다.
-        adapter = RecyclerViewAdapter(pkSet, iconSet, categoryHangulSet, commandKeyStrSet, commandStringSet, favoriteSet)
-        recyclerView!!.adapter = adapter
+        adapter =
+            RecyclerViewAdapter(
+                pkSet,
+                iconSet,
+                categoryHangulSet,
+                commandKeyStrSet,
+                commandStringSet,
+                favoriteSet
+            )
+        recyclerView!!.adapter =
+            adapter
     }
 }
 
@@ -217,7 +234,9 @@ class RecyclerViewAdapter (
     override fun onCreateViewHolder(viewGroup: ViewGroup, i: Int): ViewHolder {
         val holderView: View = LayoutInflater.from(viewGroup.context)
             .inflate(R.layout.search_list_view, viewGroup, false)
-        return ViewHolder(holderView)
+        return ViewHolder(
+            holderView
+        )
     }
 
     // 실제 각 뷰 홀더에 데이터를 연결해주는 함수
@@ -261,7 +280,9 @@ class RecyclerViewAdapter (
             val context: Context = view.context
             val inflater = LayoutInflater.from(context)
             val customAlertView = inflater.inflate(R.layout.custom_alert_dialog, null)
-            val builder: AlertDialog.Builder = AlertDialog.Builder(context, R.style.MyAlertDialogStyle) //버튼 스타일은 별도로 지정
+            val builder: AlertDialog.Builder = AlertDialog.Builder(context,
+                R.style.MyAlertDialogStyle
+            ) //버튼 스타일은 별도로 지정
 
             builder.setNegativeButton("닫기") { _, _ ->  }
             if (categoryHangulSet[i] != "none") {
